@@ -16,7 +16,7 @@ liriApp(command,search);
 function liriApp(command, search) {
   switch (command.toLowerCase()) {
     case 'concert-this':
-      concerts(search);
+      getConcerts(search);
       break;
 
     case 'spotify-this-song':
@@ -27,7 +27,6 @@ function liriApp(command, search) {
         getSpotify('The Sign')
         break;
       }
-      break;
 
     case 'movie-this':
       if(search) {
@@ -40,7 +39,7 @@ function liriApp(command, search) {
       
 
     case 'do-what-it-says':
-      doWhatItSays();
+      doWhatItSays(command, search);
       break;
 
     default:
@@ -55,23 +54,35 @@ function liriApp(command, search) {
 }
 
 
-function concerts(search) {
-
+function getConcerts(search) {
+  axios
+    .get(`https://rest.bandsintown.com/artists/${search}/events?app_id=codingbootcamp`)
+    .then(function(response) {
+      //console.log(response)
+      var concerts = response.data;
+      for (var i = 0; i < concerts.length; i++) {
+        console.log(`
+          Venues: ${concerts[i].venue.name}
+          Venue Location: ${concerts[i].venue.city}, ${concerts[i].venue.country}
+          Date of Event: ${moment(concerts[i].datetime).format("MM/DD/YYYY")}`
+          );
+      }
+    }).catch(function(err) {
+      console.log(err)
+    });
 }
 
 function getSpotify(search) {
   spotify
     .search({type: 'track', query: search, limit:1})
     .then(function(response) {
-      console.log(response)
       var song = response.tracks.items[0];
-
       var songSearch = `
-      Artist: ${song.artists[0].name}
-      Title: ${song.name}
-      Preview Link: ${song.preview_url}
-      Album: ${song.album.name}
-      `
+        Artist: ${song.artists[0].name}
+        Title: ${song.name}
+        Preview Link: ${song.preview_url}
+        Album: ${song.album.name}
+        `;
       console.log(songSearch);
     }).catch(function(err){
       console.log(`Spotifty had and error: ${err}`)
@@ -99,7 +110,17 @@ function getMovies(search) {
 }
 
 
-function doWhatItSays() {
-
+function doWhatItSays(command, search) {
+  fs.readFile("random.txt", "utf8", function(err, data) {
+    if (err) {
+      return console.log(error);
+    } else {
+      var newArr = data.split(",");
+      command = newArr[0];
+      search = newArr[1].split('"');
+      liriApp(command, search);
+    }
+  });
 }
+
 
